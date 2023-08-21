@@ -1,58 +1,69 @@
 let isPlaying = false;
 
+// const audioElement = document.getElementById("karaoke");
+const panControl = document.getElementById("panControl");
+const karaoke = document.getElementById("karaoke");
+
+const audioContext = new AudioContext();
+const source = audioContext.createMediaElementSource(karaoke);
+const splitter = audioContext.createChannelSplitter(2);
+const gainNodeL = audioContext.createGain();
+const gainNodeR = audioContext.createGain();
+const merger = audioContext.createChannelMerger(2);
+const imageElement = document.getElementById("progressImage");
+
 function togglePlayPause() {
   console.log("togglePlayPause");
   if (isPlaying) {
     pauseMusic();
+    imageElement.classList.remove("shaking");
   } else {
     playMusic();
+    imageElement.classList.add("shaking");
   }
 
   isPlaying = !isPlaying;
 }
 
 function playMusic() {
-  const instrumental = document.getElementById("instrumental");
-  const vocal = document.getElementById("vocal");
+  // Try to resume the AudioContext if needed
+  if (audioContext.state === "suspended") {
+    audioContext.resume().then(() => {
+      console.log("AudioContext resumed successfully");
+    });
+  }
 
-  instrumental.play();
-  vocal.play();
+  karaoke.play();
   updateProgressBar();
 }
 
 function pauseMusic() {
-  const instrumental = document.getElementById("instrumental");
-  const vocal = document.getElementById("vocal");
-
-  instrumental.pause();
-  vocal.pause();
+  karaoke.pause();
 }
 
-function adjustVolume() {
-  const vocal = document.getElementById("vocal");
-  const volumeControl = document.getElementById("volumeControl");
-  const progressImage = document.getElementById("progressImage");
+source.connect(splitter);
+splitter.connect(gainNodeL, 0); // Left channel (vocal)
+splitter.connect(gainNodeR, 1); // Right channel (instrumental)
+gainNodeL.connect(merger, 0, 0);
+gainNodeR.connect(merger, 0, 1);
+merger.connect(audioContext.destination);
 
-  // Set the volume for the audio element
-  vocal.volume = volumeControl.value;
+panControl.addEventListener("input", () => {
+  gainNodeL.gain.value = panControl.value; // Adjust left channel (vocal) according to slider
+  gainNodeR.gain.value = 1; // Keep right channel (instrumental) constant
 
-  // Calculate the opacity based on the input value
-  var opacityValue = volumeControl.value;
+  // Calculate opacity based on the slider value
+  const opacity = panControl.value;
 
-  // Apply the opacity to the image
-  progressImage.style.opacity = opacityValue;
-}
+  imageElement.style.opacity = opacity;
+});
 
 function seekMusic() {
-  const instrumental = document.getElementById("instrumental");
-  const vocal = document.getElementById("vocal");
   const progressBar = document.getElementById("progressBar");
 
-  const seekTime =
-    (progressBar.value / progressBar.max) * instrumental.duration;
+  const seekTime = (progressBar.value / progressBar.max) * karaoke.duration;
 
-  instrumental.currentTime = seekTime;
-  vocal.currentTime = seekTime;
+  karaoke.currentTime = seekTime;
 }
 
 const timingMap = [
@@ -122,7 +133,6 @@ const timingMap = [
 ];
 
 function updateProgressBar() {
-  const instrumental = document.getElementById("instrumental");
   const progressBar = document.getElementById("progressBar");
   const progressImage = document.getElementById("progressImage");
   const underTheSeaElement = document.getElementById("under-the-sea");
@@ -133,8 +143,7 @@ function updateProgressBar() {
   let lastProgressValue = -1; // Keep track of the last progress value
 
   const update = () => {
-    const progressPercentage =
-      (instrumental.currentTime / instrumental.duration) * 100;
+    const progressPercentage = (karaoke.currentTime / karaoke.duration) * 100;
 
     // Only update if playing or the progress bar value has changed
     if (isPlaying || progressBar.value !== lastProgressValue) {
@@ -151,7 +160,7 @@ function updateProgressBar() {
         moanaElement.style.display = "block";
       }
 
-      const currentTime = instrumental.currentTime;
+      const currentTime = karaoke.currentTime;
 
       timingMap.forEach((item) => {
         const lineElement = document.getElementById(item.lineId);
@@ -174,13 +183,3 @@ function updateProgressBar() {
 
   requestAnimationFrame(update);
 }
-
-// Optional: Synchronize tracks if needed
-setInterval(function () {
-  const instrumental = document.getElementById("instrumental");
-  const vocal = document.getElementById("vocal");
-
-  if (Math.abs(instrumental.currentTime - vocal.currentTime) > 0.1) {
-    vocal.currentTime = instrumental.currentTime;
-  }
-}, 100);

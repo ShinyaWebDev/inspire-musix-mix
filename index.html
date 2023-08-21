@@ -16,6 +16,7 @@
   <body>
     <audio id="instrumental" src="audio/music.mp3" preload="metadata"></audio>
     <audio id="vocal" src="audio/vocal.mp3" preload="metadata"></audio>
+    <audio id="karaoke" src="audio/musicRL.mp3" preload="metadata"></audio>
     <div id="lyrics-container">
       <h4 id="under-the-sea">
         <span id="line1">The seaweed is always greener </span>
@@ -114,15 +115,15 @@
           alt="moana-icon"
           class="icons"
         />
+
         <input
           class="volume_control progress win10-thumb"
           type="range"
+          id="panControl"
           min="0"
           max="1"
-          step="0.1"
+          step="0.01"
           value="1"
-          id="volumeControl"
-          oninput="adjustVolume()"
         />
       </div>
 
