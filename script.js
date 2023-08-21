@@ -29,7 +29,7 @@ function playMusic() {
   // Try to resume the AudioContext if needed
   if (audioContext.state === "suspended") {
     audioContext.resume().then(() => {
-      console.log("AudioContext resumed successfully");
+      console.log("AudioContext resumed successfully on play");
     });
   }
 
